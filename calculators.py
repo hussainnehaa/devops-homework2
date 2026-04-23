@@ -412,11 +412,47 @@ def calculate_heart_score(history, ecg, age_score, risk_factors, troponin):
       5. Return a dict containing ``'score'``, ``'risk_level'``, and
          ``'interpretation'``.
     """
-    # TODO: Students — implement this function
-    raise NotImplementedError(
-        "calculate_heart_score() is not yet implemented. "
-        "Please implement this function according to the docstring."
-    )
+    components = {
+        'history': history,
+        'ecg': ecg,
+        'age_score': age_score,
+        'risk_factors': risk_factors,
+        'troponin': troponin,
+    }
+
+    for name, value in components.items():
+        if not isinstance(value, int) or value not in (0, 1, 2):
+            raise ValueError(
+                f"{name} must be an integer value of 0, 1, or 2. "
+                f"Received: {value}."
+            )
+
+    score = sum(components.values())
+
+    if score <= 3:
+        risk_level = 'low'
+        interpretation = (
+            "HEART score 0-3: Low risk of major adverse cardiac events. "
+            "Consider early discharge with outpatient follow-up."
+        )
+    elif score <= 6:
+        risk_level = 'moderate'
+        interpretation = (
+            "HEART score 4-6: Moderate risk of major adverse cardiac events. "
+            "Observe the patient and obtain serial troponins and ECGs."
+        )
+    else:
+        risk_level = 'high'
+        interpretation = (
+            "HEART score 7-10: High risk of major adverse cardiac events. "
+            "Early invasive management is recommended."
+        )
+
+    return {
+        'score': score,
+        'risk_level': risk_level,
+        'interpretation': interpretation,
+    }
 
 
 # =============================================================================
@@ -556,8 +592,48 @@ def calculate_pecarn(age_months, gcs, altered_mental_status,
                            preference'
            low          → 'CT scan NOT recommended'
     """
-    # TODO: Students — implement this function
-    raise NotImplementedError(
-        "calculate_pecarn() is not yet implemented. "
-        "Please implement this function according to the docstring."
+    if not isinstance(gcs, int) or gcs < 3 or gcs > 15:
+        raise ValueError("gcs must be between 3 and 15 (inclusive).")
+
+    if age_months < 24:
+        if gcs < 15 or palpable_skull_fracture or altered_mental_status:
+            risk_level = "high"
+        elif (loss_of_consciousness or
+              scalp_hematoma_location == "non-frontal" or
+              severe_mechanism or
+              vomiting):
+            risk_level = "intermediate"
+        else:
+            risk_level = "low"
+    else:
+        if gcs < 15 or signs_basal_skull_fracture or altered_mental_status:
+            risk_level = "high"
+        elif (loss_of_consciousness or
+              vomiting or
+              severe_mechanism or
+              severe_headache):
+            risk_level = "intermediate"
+        else:
+            risk_level = "low"
+
+    recommendation_map = {
+        "high": "CT scan recommended",
+        "intermediate": (
+            "CT scan versus observation: individualise based on physician "
+            "experience, multiple vs isolated findings, worsening symptoms, "
+            "age < 3 months, parental preference"
+        ),
+        "low": "CT scan NOT recommended",
+    }
+
+    recommendation = recommendation_map[risk_level]
+    interpretation = (
+        f"PECARN pediatric head injury decision rule: risk_level={risk_level}. "
+        f"Recommendation: {recommendation}."
     )
+
+    return {
+        "risk_level": risk_level,
+        "recommendation": recommendation,
+        "interpretation": interpretation,
+    }
